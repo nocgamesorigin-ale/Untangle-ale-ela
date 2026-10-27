@@ -24,3 +24,8 @@ canvas {
   display: block;
   touch-action: none;
 }
+
+/* Wide screens: the canvas is a portrait column, centred in the window. */
+canvas {
+  margin: 0 auto;
+}

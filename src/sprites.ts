@@ -25,6 +25,8 @@ import popTimeUp from './assets/pop-timeup.webp';
 import popOot from './assets/pop-oot.webp';
 import starOff from './assets/star-off.webp';
 import starOn from './assets/star-on.webp';
+import slotEmpty from './assets/slot-empty.png';
+import slotLocked from './assets/slot-locked.png';
 
 function load(src: string): HTMLImageElement {
   const img = new Image();
@@ -75,7 +77,14 @@ export function nine(
   }
 }
 
-const tints = new Map<string, HTMLCanvasElement>();
+/** Recoloured copies per image (keyed by the image itself, so art with equal URL lengths never collide). */
+const tints = new WeakMap<HTMLImageElement, Map<string, HTMLCanvasElement>>();
+
+function tintCache(img: HTMLImageElement): Map<string, HTMLCanvasElement> {
+  let m = tints.get(img);
+  if (!m) tints.set(img, (m = new Map()));
+  return m;
+}
 
 /**
  * The art recoloured to `color` for bright hues (yellow, orange): its greyscale shading
@@ -83,8 +92,8 @@ const tints = new Map<string, HTMLCanvasElement>();
  */
 export function tintedBright(img: HTMLImageElement, color: string): HTMLCanvasElement | HTMLImageElement {
   if (!ready(img)) return img;
-  const key = 'b' + img.src.length + color;
-  let cv = tints.get(key);
+  const cache = tintCache(img), key = 'b' + color;
+  let cv = cache.get(key);
   if (!cv) {
     cv = document.createElement('canvas');
     cv.width = img.naturalWidth;
@@ -106,7 +115,7 @@ export function tintedBright(img: HTMLImageElement, color: string): HTMLCanvasEl
     c.drawImage(gray, 0, 0);
     c.globalCompositeOperation = 'destination-in';
     c.drawImage(img, 0, 0);
-    tints.set(key, cv);
+    cache.set(key, cv);
   }
   return cv;
 }
@@ -114,8 +123,8 @@ export function tintedBright(img: HTMLImageElement, color: string): HTMLCanvasEl
 /** The art recoloured to `color` (keeps its shading and alpha); cached per colour. */
 export function tinted(img: HTMLImageElement, color: string): HTMLCanvasElement | HTMLImageElement {
   if (!ready(img)) return img;
-  const key = img.src.length + color;
-  let cv = tints.get(key);
+  const cache = tintCache(img), key = color;
+  let cv = cache.get(key);
   if (!cv) {
     cv = document.createElement('canvas');
     cv.width = img.naturalWidth;
@@ -127,10 +136,14 @@ export function tinted(img: HTMLImageElement, color: string): HTMLCanvasElement 
     c.fillRect(0, 0, cv.width, cv.height);
     c.globalCompositeOperation = 'destination-in';
     c.drawImage(img, 0, 0);
-    tints.set(key, cv);
+    cache.set(key, cv);
   }
   return cv;
 }
+
+// ---- holder slots (cut from the reference art: gold ring, purple face; locked has the pink X) ----
+
+export const SLOT_ART = { empty: load(slotEmpty), locked: load(slotLocked) };
 
 // ---- pegs ----------------------------------------------------------------
 

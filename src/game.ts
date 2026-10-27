@@ -11,8 +11,9 @@
 import { sfx, setSound, soundOn, unlockAudio } from './audio';
 import {
   ART_SCALE, BADGE_AT, BOOSTER_ART, HOME, type HomePart, HOME_BG, HOME_COIN_TEXT, HOME_H, HOME_LEVEL_TEXT, HOME_W, HUD_ASPECT, HUD_CELL,
-  HUD_PANEL, HUD_TAB, PEG, POP_FAIL, POP_FULL, POP_OOT, POP_TIMEUP, POP_PAUSE, POP_WIN, STAR_OFF, STAR_ON, nine, ready, tinted, type Box,
+  HUD_PANEL, HUD_TAB, PEG, POP_FAIL, POP_FULL, POP_OOT, POP_TIMEUP, POP_PAUSE, POP_WIN, SLOT_ART, STAR_OFF, STAR_ON, nine, ready, tinted, type Box,
 } from './sprites';
+import { art } from './art';
 import { emit, levelChanged, type GameEventData } from './gamekit';
 import type { PointerEvt } from './input';
 import {
@@ -287,6 +288,11 @@ export class Game {
   private popK = 1;
   /** Clear Data asks for a second tap within this many seconds. */
   private clearArmed = 0;
+  /** Cheat row under the pause popup: pick any level and jump straight to it. */
+  private cheatLv = 1;
+  private cDn = rect();
+  private cUp = rect();
+  private cGo = rect();
   /** Coins shown in the top-left counter (catches up as reward coins land). */
   private coinShown = 0;
   private coinPulse = 0;
@@ -645,6 +651,9 @@ export class Game {
       if (inRect(x, y, this.mC)) return 'mC';
       if (inRect(x, y, this.mD)) return 'mD';
       if (inRect(x, y, this.mE)) return 'mE';
+      if (inRect(x, y, this.cDn)) return 'cDn';
+      if (inRect(x, y, this.cUp)) return 'cUp';
+      if (inRect(x, y, this.cGo)) return 'cGo';
       return '';
     }
     for (let i = 0; i < 5; i++) if (inCircle(x, y, this.btnX[i], this.btnY, this.btnR * 1.15)) return 'b' + i;
@@ -751,6 +760,19 @@ export class Game {
         sfx.click();
         this.modal = 'none';
         this.phase = 'title';
+      } else if (inRect(x, y, this.cDn)) {
+        sfx.click();
+        this.cheatLv = this.cheatLv <= 1 ? LEVEL_COUNT : this.cheatLv - 1;
+      } else if (inRect(x, y, this.cUp)) {
+        sfx.click();
+        this.cheatLv = this.cheatLv >= LEVEL_COUNT ? 1 : this.cheatLv + 1;
+      } else if (inRect(x, y, this.cGo)) {
+        // cheat: unlock up to the picked level and play it right away
+        sfx.click();
+        this.save.maxLevel = Math.max(this.save.maxLevel, this.cheatLv);
+        this.persist();
+        emit('cheatLevel', { from: this.level, to: this.cheatLv });
+        this.startLevel(this.cheatLv);
       }
       return;
     }
@@ -1042,6 +1064,7 @@ export class Game {
         this.modal = 'menu';
         this.popT = 0;
         this.clearArmed = 0;
+        this.cheatLv = this.level;
         this.layoutModal();
         return;
     }
@@ -1298,17 +1321,23 @@ export class Game {
       this.mD = { x: bx, y: py + 70 * s + gap * 3, w: bw, h: 50 * s };
     }
     this.mE = { ...zero };
+    this.cDn = { ...zero };
+    this.cUp = { ...zero };
+    this.cGo = { ...zero };
+    // room under the pause popup for the cheat row
+    const cheatH = this.modal === 'menu' && this.phase === 'playing' ? 64 * s : 0;
+    if (cheatH > 0) this.layoutCheat(px, py + ph + 14 * s, pw);
     this.mCloseR = 22 * s;
     // popups drawn from the art: place the art, then map its buttons
     const art = this.phase === 'won' ? POP_WIN : this.phase === 'lost' ? (this.loseReason === 'time' ? POP_OOT : POP_FAIL)
       : this.modal === 'outOfSpace' ? POP_FULL : this.modal === 'timeUp' ? POP_TIMEUP : this.modal === 'menu' ? POP_PAUSE : null;
     if (art) {
       let aw = Math.min(w - 20, 360 * s), ah = (aw * art.h) / art.w;
-      if (ah > h * 0.8) {
-        ah = h * 0.8;
+      if (ah > h * 0.8 - cheatH) {
+        ah = h * 0.8 - cheatH;
         aw = (ah * art.w) / art.h;
       }
-      const ax = (w - aw) / 2, ay = Math.max(this.sat + 30 * s, (h - ah) / 2 - 10 * s);
+      const ax = (w - aw) / 2, ay = Math.max(this.sat + 30 * s, (h - ah - cheatH) / 2 - 10 * s);
       const k = (this.popK = aw / art.w);
       this.mPanel = { x: ax, y: ay, w: aw, h: ah };
       const R = (b: Box): Rect => ({ x: ax + b[0] * k, y: ay + b[1] * k, w: (b[2] - b[0]) * k, h: (b[3] - b[1]) * k });
@@ -1334,8 +1363,19 @@ export class Game {
         this.mC = R(POP_PAUSE.sound);
         this.mD = R(POP_PAUSE.clear);
         this.mE = R(POP_PAUSE.home);
+        this.layoutCheat(ax, ay + ah + 4 * s, aw);
       }
     }
+  }
+
+  /** Cheat row: [-] Level n [+] [Play], centred under a popup of width `pw` at `px`. */
+  private layoutCheat(px: number, y: number, pw: number): void {
+    const s = this.s;
+    const rw = pw * 0.84, x = px + (pw - rw) / 2, bh = 48 * s, gap = 8 * s;
+    const goW = rw * 0.3;
+    this.cDn = { x, y, w: bh, h: bh };
+    this.cGo = { x: x + rw - goW, y, w: goW, h: bh };
+    this.cUp = { x: this.cGo.x - gap - bh, y, w: bh, h: bh };
   }
 
   /** Screen position of a point given in the open popup's art pixels. */
@@ -1463,18 +1503,20 @@ export class Game {
     }
     this.pegs = makePegSprites(k, ps, PEG);
     this.pegArt = ready(PEG);
-    // Materials sampled from the reference board: a smooth glossy orange frame, a deep
-    // front face (light orange band on top, burnt orange below, dark lip), a thin inner
-    // lip and a flat warm-cream play surface — the same wood on every level.
-    type Mat = { top: string[]; side: string[]; lip: string; face: string[] };
-    const mats: Record<string, Mat> = {
-      // sampled from the reference: glossy orange frame, neutral warm-grey/beige surface
-      // spec: frame #E78B3A (highlight #FFB568, shadow #B86427), satin plastic; surface #E3D8CB matte
-      normal: { top: ['#ffb568', '#e78b3a', '#dc7f31'], side: ['#e78b3a', '#d0782f', '#b86427', '#a2541d'], lip: '#7a3a12', face: ['#e7ddd1', '#e3d8cb', '#ddd1c3'] },
+    // Materials sampled from the reference board art: a thick glossy orange frame
+    // (bright top edge, saturated orange band, dark crease into the surface), a deep
+    // burnt-orange front face with a dark lip, and a warm peach play surface with
+    // light cream guide lines — the same on every level.
+    const mat = {
+      top: ['#feb74e', '#fc9a3c', '#f69540'],
+      side: ['#f28830', '#be591e', '#a84c19'],
+      lip: '#863309',
+      crease: ['#8f3409', '#722504', '#dfa35e'],
+      face: ['#f7cb8a', '#f8c47c', '#f6bf75'],
+      shade: 'rgba(214,120,40,0.06)',
+      grid: '#fddba8',
     };
-    // the board is always wood, whatever the difficulty
-    const mat = mats.normal;
-    const rim = [mat.top[0], mat.top[1], mat.side[2], mat.lip];
+    const rim = [mat.top[0], mat.top[1], mat.side[1], mat.lip];
     c.setTransform(k, 0, 0, k, -x0 * k, -y0 * k);
     c.lineJoin = 'round';
     const poly = new Path2D();
@@ -1483,18 +1525,19 @@ export class Game {
     for (let i = 2; i < p.length; i += 2) poly.lineTo(p[i], p[i + 1]);
     poly.closePath();
     // M: surface margin past the outer pegs (kept tight so pegs sit near the frame),
-    // R: frame width, D: board thickness
-    const M = 0.18, R = 0.28, D = 0.45;
-    const blob = (dx: number, dy: number, width: number, style: string | CanvasGradient) => {
-      c.save();
-      c.translate(dx, dy);
-      c.fillStyle = style;
-      c.strokeStyle = style;
-      c.lineWidth = width;
-      c.fill(poly);
-      c.stroke(poly);
-      c.restore();
+    // R: frame width, D: board thickness (reference: frame ≈ 1.1 peg radius, depth ≈ 2 × frame)
+    const M = 0.18, R = 0.22, D = 0.4;
+    const blobOn = (cx: CanvasRenderingContext2D, dx: number, dy: number, width: number, style: string | CanvasGradient) => {
+      cx.save();
+      cx.translate(dx, dy);
+      cx.fillStyle = style;
+      cx.strokeStyle = style;
+      cx.lineWidth = width;
+      cx.fill(poly);
+      cx.stroke(poly);
+      cx.restore();
     };
+    const blob = (dx: number, dy: number, width: number, style: string | CanvasGradient) => blobOn(c, dx, dy, width, style);
     // one smooth contact shadow under the board: painted small and scaled up, which
     // blurs it on every browser (no ctx.filter needed)
     {
@@ -1502,18 +1545,8 @@ export class Game {
       const [sm, sc] = makeCanvas((x1 - x0) * sk, (y1 - y0) * sk);
       sc.setTransform(sk, 0, 0, sk, -x0 * sk, -y0 * sk);
       sc.lineJoin = 'round';
-      const drop = (dy: number, width: number, style: string) => {
-        sc.save();
-        sc.translate(0.05, dy);
-        sc.fillStyle = style;
-        sc.strokeStyle = style;
-        sc.lineWidth = width;
-        sc.fill(poly);
-        sc.stroke(poly);
-        sc.restore();
-      };
-      drop(D + 0.32, 2 * (M + R) + 0.5, 'rgba(70,40,150,0.28)');
-      drop(D + 0.16, 2 * (M + R) + 0.12, 'rgba(50,25,120,0.42)');
+      blobOn(sc, 0.05, D + 0.32, 2 * (M + R) + 0.5, 'rgba(70,40,150,0.28)');
+      blobOn(sc, 0.05, D + 0.16, 2 * (M + R) + 0.12, 'rgba(50,25,120,0.42)');
       c.save();
       c.setTransform(1, 0, 0, 1, 0, 0);
       c.imageSmoothingEnabled = true;
@@ -1521,42 +1554,50 @@ export class Game {
       c.drawImage(sm, 0, 0, cv.width, cv.height);
       c.restore();
     }
-    // front face (deep, satin-glossy like the reference): a bright streak just under the
-    // top edge, then warm orange falling off to a burnt-orange base and a dark lip
+    // front face: the frame's orange runs a little way down the edge, then a sharp
+    // turn into burnt orange that darkens towards a thin dark lip
     blob(0, D + 0.03, 2 * (M + R) - 0.04, mat.lip);
     const steps = 18;
     for (let i = steps; i >= 0; i--) {
       const f = i / steps; // 0 top of the side → 1 bottom
       let col: string;
-      if (f < 0.12) col = mix(mat.side[0], mat.top[0], f / 0.12);
-      else if (f < 0.28) col = mix(mat.top[0], mat.side[1], (f - 0.12) / 0.16);
-      else if (f < 0.6) col = mix(mat.side[1], mat.side[2], (f - 0.28) / 0.32);
-      else col = mix(mat.side[2], mat.side[3], (f - 0.6) / 0.4);
+      if (f < 0.1) col = mix(mat.top[2], mat.side[0], f / 0.1);
+      else if (f < 0.2) col = mix(mat.side[0], mat.side[1], (f - 0.1) / 0.1);
+      else col = mix(mat.side[1], mat.side[2], (f - 0.2) / 0.8);
       blob(0, D * f, 2 * (M + R), col);
     }
-    // frame top: bright outer edge, orange band, darker inner edge
+    // frame top: bright outer edge, then the glossy orange band
     const fgT = c.createLinearGradient(0, by0, 0, by1);
     fgT.addColorStop(0, mat.top[1]);
     fgT.addColorStop(1, mat.top[2]);
     blob(0, 0, 2 * (M + R), mat.top[0]);
-    blob(0, 0.006, 2 * (M + R) - 0.05, fgT);
-    blob(0, 0.01, 2 * M + 0.1, mix(mat.top[2], mat.side[2], 0.45));
-    // thin dark crease where the frame meets the surface
-    blob(0, 0.012, 2 * M + 0.045, mix(mat.side[2], '#5a2a0c', 0.4));
-    const fg = c.createLinearGradient(0, by0, 0, by1);
-    fg.addColorStop(0, mat.face[0]);
-    fg.addColorStop(0.6, mat.face[1]);
-    fg.addColorStop(1, mat.face[2]);
-    blob(0, 0, 2 * M, fg);
-    // inner glow to give the face some depth
-    c.save();
-    c.clip(poly);
-    const gg = c.createRadialGradient((bx0 + bx1) / 2, by0 + (by1 - by0) * 0.3, 0.5, (bx0 + bx1) / 2, (by0 + by1) / 2, Math.max(bx1 - bx0, by1 - by0) * 0.7);
-    gg.addColorStop(0, 'rgba(255,255,255,0.1)');
-    gg.addColorStop(1, 'rgba(120,80,50,0.07)');
-    c.fillStyle = gg;
-    c.fillRect(bx0 - 2, by0 - 2, bx1 - bx0 + 4, by1 - by0 + 4);
-    c.restore();
+    blob(0, 0.008, 2 * (M + R) - 0.06, fgT);
+    // dark crease where the frame drops onto the surface, with a light bevel inside it
+    blob(0, 0, 2 * M + 0.09, mat.crease[0]);
+    blob(0, 0.008, 2 * M + 0.05, mat.crease[1]);
+    blob(0, 0.008, 2 * M + 0.02, mat.crease[2]);
+    // peach surface, painted on its own layer so the soft inner shading along the
+    // frame (strokes kept to the surface with source-atop) never spills onto the frame
+    {
+      const [sv, s2] = makeCanvas(cv.width, cv.height);
+      s2.setTransform(k, 0, 0, k, -x0 * k, -y0 * k);
+      s2.lineJoin = 'round';
+      const fg = s2.createLinearGradient(0, by0, 0, by1);
+      fg.addColorStop(0, mat.face[0]);
+      fg.addColorStop(0.55, mat.face[1]);
+      fg.addColorStop(1, mat.face[2]);
+      blobOn(s2, 0, 0.01, 2 * M, fg);
+      s2.globalCompositeOperation = 'source-atop';
+      s2.strokeStyle = mat.shade;
+      for (let i = 1; i <= 6; i++) {
+        s2.lineWidth = 2 * M + 0.06 * i;
+        s2.stroke(poly);
+      }
+      c.save();
+      c.setTransform(1, 0, 0, 1, 0, 0);
+      c.drawImage(sv, 0, 0);
+      c.restore();
+    }
     if (L.hole) {
       let hr = 0;
       for (let i = 0; i < L.hole.length; i += 2) hr = Math.max(hr, Math.abs(L.hole[i]));
@@ -1585,11 +1626,9 @@ export class Game {
       c.ellipse(0, 0, r, ry, 0, 0, Math.PI * 2);
       c.stroke();
     }
-    // faint lattice lines
-    // thin, low-contrast guide grid (#F5EEE6); on the light canvas surface a high alpha
-    // still reads as roughly 20% contrast, like the reference
-    c.strokeStyle = 'rgba(245,238,230,0.85)';
-    c.lineWidth = 0.03;
+    // light cream guide lines on the peach surface, like the reference
+    c.strokeStyle = mat.grid;
+    c.lineWidth = 0.028;
     c.beginPath();
     for (let i = 0; i < L.grid.length; i += 4) {
       c.moveTo(L.grid[i], L.grid[i + 1]);
@@ -1610,7 +1649,13 @@ export class Game {
     if (!b) {
       const [cv, c] = makeCanvas(this.width * this.dpr, this.height * this.dpr);
       c.scale(this.dpr, this.dpr);
-      paintBackdrop(c, this.width, this.height, this.area.y + this.area.h * 0.5);
+      const bg = art('play_bg');
+      if (bg) {
+        // cover the screen with the Gemini backdrop (cropped evenly on the long side)
+        const k = Math.max(this.width / bg.naturalWidth, this.height / bg.naturalHeight);
+        const dw = bg.naturalWidth * k, dh = bg.naturalHeight * k;
+        c.drawImage(bg, (this.width - dw) / 2, (this.height - dh) / 2, dw, dh);
+      } else paintBackdrop(c, this.width, this.height, this.area.y + this.area.h * 0.5);
       b = this.backdrops[0] = cv;
     }
     return b;
@@ -1902,7 +1947,7 @@ export class Game {
       const locked = i >= this.cap;
       const hintPark = this.hintT > 0 && this.hintId >= 0 && this.findTray(this.bands[this.hintId].color) < 0 && i === this.holder.indexOf(-1);
       const state = locked ? 'disabled' : hintPark ? 'selected' : this.holder[i] >= 0 ? 'occupied' : 'empty';
-      flatSlot(ctx, x, y, hr, state, 0.5 + 0.5 * Math.sin(this.time * 8));
+      flatSlot(ctx, x, y, hr, state, 0.5 + 0.5 * Math.sin(this.time * 8), SLOT_ART);
       if (locked) continue;
       const c = this.holder[i];
       if (c >= 0 && !this.inboundHolder(i)) {
@@ -2271,7 +2316,27 @@ export class Game {
       ctx.fill();
       label(ctx, 'Tap again to erase progress', r.x + r.w / 2, r.y + r.h * 0.48, r.h * 0.26, '#ffffff', '#7a0020');
     }
+    this.drawCheat(ctx);
     ctx.restore();
+  }
+
+  private drawCheat(ctx: CanvasRenderingContext2D): void {
+    const dn = this.cDn, up = this.cUp, go = this.cGo, h = dn.h;
+    if (h <= 0) return;
+    const step = (r: Rect, key: string, ic: IconName) => {
+      pillButton(ctx, r.x, r.y, r.w, r.h, '#ffd84a', '#f0a020', '#8a5a08', '', 0, this.pressKey === key);
+      icon(ctx, ic, r.x + r.w / 2, r.y + r.h / 2 + (this.pressKey === key ? r.h * 0.08 : 0), r.h * 0.3);
+    };
+    // value plate between the arrows
+    const vx = dn.x + dn.w + 6 * this.s, vw = up.x - 6 * this.s - vx;
+    ctx.fillStyle = 'rgba(10,30,100,0.72)';
+    rr(ctx, vx, dn.y + h * 0.04, vw, h * 0.92, h * 0.3);
+    ctx.fill();
+    label(ctx, 'CHEAT', vx + vw / 2, dn.y + h * 0.3, h * 0.22, '#ffd84a', '');
+    label(ctx, `Level ${this.cheatLv}`, vx + vw / 2, dn.y + h * 0.64, h * 0.34, '#ffffff', '#1747b8');
+    step(dn, 'cDn', 'minus');
+    step(up, 'cUp', 'plus');
+    pillButton(ctx, go.x, go.y, go.w, go.h, '#7af06a', '#2aa83a', '#16702a', 'Play', h * 0.38, this.pressKey === 'cGo');
   }
 
   private drawMenuFallback(ctx: CanvasRenderingContext2D): void {
@@ -2292,6 +2357,7 @@ export class Game {
     btn(this.mC, 'mC', '#6ab8ff', '#2a6ad0', '#163a8a', soundOn() ? 'Sound: On' : 'Sound: Off', soundOn() ? 'sound' : 'mute');
     btn(this.mD, 'mD', '#c78af5', '#7a3fd0', '#3a1478', 'Home', 'home');
     this.closeButton(ctx);
+    this.drawCheat(ctx);
     ctx.restore();
   }
 

@@ -1,5 +1,6 @@
 // Boot: canvas sized to the screen (with device pixel ratio), a fixed-step
 // game loop, input, and the first `ready` event for the GameKit preview.
+import { preloadArt } from './art';
 import { Game, LEVEL_COUNT } from './game';
 import { DEBUG, emit, registerLevels } from './gamekit';
 import { Input } from './input';
@@ -14,10 +15,14 @@ const input = new Input(canvas);
 // Expose the safe-area top inset to the game as a CSS variable it can read.
 document.documentElement.style.setProperty('--sat', 'env(safe-area-inset-top, 0px)');
 
+// The game is laid out for a portrait phone. On wide screens (desktop browser, landscape)
+// it runs in a centred portrait column instead of stretching across the window.
+const MAX_ASPECT = 0.5; // width / height
+
 function resize(): void {
   const dpr = Math.min(window.devicePixelRatio || 1, 3);
-  const w = window.innerWidth;
   const h = window.innerHeight;
+  const w = Math.min(window.innerWidth, Math.round(h * MAX_ASPECT));
   canvas.width = Math.round(w * dpr);
   canvas.height = Math.round(h * dpr);
   canvas.style.width = w + 'px';
@@ -55,7 +60,8 @@ function frame(now: number): void {
   }
   requestAnimationFrame(frame);
 }
-requestAnimationFrame(frame);
+// Gemini art (src/assets via art.ts) is decoded before the first frame; missing art falls back to Canvas.
+void preloadArt().then(() => requestAnimationFrame(frame));
 
 // Test hooks: `?level=N` opens a level directly, `&moves=K` lets the hint solver play K moves.
 const params = new URLSearchParams(location.search);

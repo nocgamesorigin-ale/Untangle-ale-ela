@@ -54,25 +54,25 @@ export const COLORS = [
 ];
 
 export const SPECS: LevelSpec[] = [
-  // Triangle (1–3)
-  { name: 'First Knot', shape: 'triangle', size: 3.48, lattice: 'tri', bands: 6, colors: 2, trays: 2, holder: 4, diff: 'normal', tpl: ['seg', 'tri', 'seg2'], overlap: 0.55 },
-  { name: 'Pyramid', shape: 'triangle', size: 3.78, lattice: 'tri', bands: 9, colors: 3, trays: 2, holder: 4, diff: 'normal', tpl: ['tri', 'seg', 'seg2'], overlap: 0.6 },
-  { name: 'Honeycomb', shape: 'triangle', size: 3.8, lattice: 'tri', bands: 9, colors: 3, trays: 2, holder: 4, diff: 'normal', tpl: ['tri', 'hex', 'seg2', 'rhomb', 'seg'], overlap: 0.65, pattern: 'honeycomb' },
+  // Diamond (1–3)
+  { name: 'First Knot', shape: 'diamond', size: 3.2, lattice: 'tri', bands: 6, colors: 2, trays: 2, holder: 4, diff: 'normal', tpl: ['seg', 'tri', 'seg2'], overlap: 0.55 },
+  { name: 'Sparkle', shape: 'diamond', size: 4.32, lattice: 'tri', bands: 9, colors: 3, trays: 2, holder: 4, diff: 'normal', tpl: ['tri', 'seg', 'seg2'], overlap: 0.6 },
+  { name: 'Crystal Comb', shape: 'diamond', size: 3.76, lattice: 'tri', bands: 9, colors: 3, trays: 2, holder: 4, diff: 'normal', tpl: ['tri', 'hex', 'seg2', 'rhomb', 'seg'], overlap: 0.65, pattern: 'honeycomb' },
   // Square (4–5)
   { name: 'Checkerboard', shape: 'square', size: 2.45, lattice: 'sq', bands: 12, colors: 3, trays: 2, holder: 4, diff: 'normal', tpl: ['sq', 'seg', 'tri', 'seg2', 'diag'], overlap: 0.7 },
   { name: 'Courtyard', shape: 'square', size: 4.22, lattice: 'sq', bands: 12, colors: 4, trays: 2, holder: 4, diff: 'normal', tpl: ['sq', 'rect', 'diam', 'tri', 'seg2'], overlap: 0.72 },
-  // Heart (6–8)
-  { name: 'Heartstrings', shape: 'heart', size: 3.59, lattice: 'tri', bands: 15, colors: 4, trays: 2, holder: 4, diff: 'hard', tpl: ['tri', 'rhomb', 'seg2', 'trap', 'hex'], overlap: 0.82 },
-  { name: 'Sweetheart', shape: 'heart', size: 4.67, lattice: 'tri', bands: 15, colors: 4, trays: 2, holder: 4, diff: 'normal', tpl: ['tri', 'rhomb', 'seg2', 'trap'], overlap: 0.75 },
-  { name: 'Love Lines', shape: 'heart', size: 3.57, lattice: 'tri', bands: 18, colors: 5, trays: 2, holder: 4, diff: 'normal', tpl: ['tri', 'tri2', 'seg2', 'rhomb', 'seg'], overlap: 0.78 },
+  // Crown (6–8)
+  { name: 'Little Crown', shape: 'crown', size: 4, lattice: 'tri', bands: 15, colors: 4, trays: 2, holder: 4, diff: 'hard', tpl: ['tri', 'rhomb', 'seg2', 'trap', 'hex'], overlap: 0.82 },
+  { name: 'Tiara', shape: 'crown', size: 4.24, lattice: 'tri', bands: 15, colors: 4, trays: 2, holder: 4, diff: 'normal', tpl: ['tri', 'rhomb', 'seg2', 'trap'], overlap: 0.75 },
+  { name: 'Crown Jewels', shape: 'crown', size: 4, lattice: 'tri', bands: 18, colors: 5, trays: 2, holder: 4, diff: 'normal', tpl: ['tri', 'tri2', 'seg2', 'rhomb', 'seg'], overlap: 0.78 },
   // Hexagon (9–11)
   { name: 'Hive', shape: 'hexagon', size: 3.7, lattice: 'tri', bands: 18, colors: 5, trays: 2, holder: 4, diff: 'normal', tpl: ['tri', 'seg2', 'rhomb', 'trap', 'hex'], overlap: 0.8 },
   { name: 'Royal Hive', shape: 'hexagon', size: 5.46, lattice: 'tri', bands: 24, colors: 5, trays: 2, holder: 3, diff: 'superhard', tpl: ['hex', 'tri', 'tri2', 'trap', 'rhomb2', 'seg2'], overlap: 0.9, pattern: 'honeycomb' },
   { name: 'Hollow Hive', shape: 'hexagon', size: 4.54, lattice: 'tri', bands: 18, colors: 5, trays: 2, holder: 4, diff: 'normal', tpl: ['tri', 'seg2', 'seg3', 'rhomb', 'trap'], overlap: 0.78 },
-  // Cloud (12–14)
-  { name: 'Cloud Nine', shape: 'cloud', size: 4.3, lattice: 'tri', bands: 21, colors: 5, trays: 2, holder: 4, diff: 'normal', tpl: ['tri', 'trap', 'rhomb2', 'seg3', 'hex'], overlap: 0.8 },
-  { name: 'Storm Cloud', shape: 'cloud', size: 5.77, lattice: 'tri', bands: 24, colors: 6, trays: 2, holder: 4, diff: 'hard', tpl: ['tri', 'hex', 'rhomb', 'seg2', 'trap'], overlap: 0.86, pattern: 'honeycomb' },
-  { name: 'Silver Lining', shape: 'cloud', size: 4.77, lattice: 'tri', bands: 21, colors: 6, trays: 2, holder: 4, diff: 'normal', tpl: ['tri', 'rhomb', 'seg2', 'trap'], overlap: 0.8 },
+  // Flower (12–14)
+  { name: 'Daisy', shape: 'flower', size: 4.96, lattice: 'tri', bands: 21, colors: 5, trays: 2, holder: 4, diff: 'normal', tpl: ['tri', 'trap', 'rhomb2', 'seg3', 'hex'], overlap: 0.8 },
+  { name: 'Wild Bloom', shape: 'flower', size: 6.76, lattice: 'tri', bands: 24, colors: 6, trays: 2, holder: 4, diff: 'hard', tpl: ['tri', 'hex', 'rhomb', 'seg2', 'trap'], overlap: 0.86, pattern: 'honeycomb' },
+  { name: 'Blossom', shape: 'flower', size: 5.24, lattice: 'tri', bands: 21, colors: 6, trays: 2, holder: 4, diff: 'normal', tpl: ['tri', 'rhomb', 'seg2', 'trap'], overlap: 0.8 },
   // Trapezoid (15–17)
   { name: 'Grand Stairs', shape: 'trapezoid', size: 5.34, lattice: 'tri', bands: 27, colors: 6, trays: 2, holder: 4, diff: 'superhard', tpl: ['tri', 'tri2', 'trap', 'rhomb2', 'pent', 'seg2'], overlap: 0.9 },
   { name: 'Terraces', shape: 'trapezoid', size: 4.73, lattice: 'tri', bands: 24, colors: 6, trays: 2, holder: 4, diff: 'hard', tpl: ['tri', 'rhomb2', 'seg3', 'trap', 'hex', 'seg2'], overlap: 0.86 },

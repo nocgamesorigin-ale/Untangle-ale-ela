@@ -2,6 +2,9 @@
 // round buttons, icons, pegs and rubber rings. Everything is Canvas 2D paths;
 // the expensive pieces (backdrop, pegs) are painted once into offscreen canvases.
 
+import { art } from './art';
+import { tintedBright } from './sprites';
+
 export const FONT = 'Fredoka, "Arial Rounded MT Bold", "Nunito", "Trebuchet MS", system-ui, sans-serif';
 
 export function font(size: number, weight = 700): string {
@@ -1085,7 +1088,14 @@ export function padlock(c: CanvasRenderingContext2D, x: number, y: number, size:
   c.beginPath();
   c.ellipse(x + size * 0.05, by + bh + size * 0.06, bw * 0.45, size * 0.1, 0, 0, Math.PI * 2);
   c.fill();
-  // body
+  // body: greyscale Gemini art recoloured to the band's colour (sockets on top, keyhole baked in)
+  const body = art('lock_body');
+  if (body) {
+    const ih = bw * (body.naturalHeight / body.naturalWidth);
+    c.drawImage(tintedBright(body, col.base), x - bw / 2, by + bh + size * 0.04 - ih, bw, ih);
+    c.restore();
+    return;
+  }
   c.fillStyle = col.dark;
   rr(c, x - bw / 2, by + size * 0.07, bw, bh, size * 0.24);
   c.fill();
@@ -1121,6 +1131,14 @@ export function keyAsset(c: CanvasRenderingContext2D, x: number, y: number, size
   c.beginPath();
   c.arc(0, size * 0.08, size * 0.09, 0, Math.PI * 2);
   c.stroke();
+  // greyscale Gemini art recoloured to the band's colour; its bow is as wide as the art
+  const key = art('key_grey');
+  if (key) {
+    const kw = hr * 2, kh = kw * (key.naturalHeight / key.naturalWidth);
+    c.drawImage(tintedBright(key, col.base), -kw / 2, size * 0.17, kw, kh);
+    c.restore();
+    return;
+  }
   const draw = (fill: string | CanvasGradient, dy: number) => {
     c.fillStyle = fill;
     c.beginPath();
@@ -1311,6 +1329,12 @@ export function trayFront(c: CanvasRenderingContext2D, x: number, y: number, W: 
  * crescent behind it on the left like the reference art. `r` is the outer radius.
  */
 export function donut(c: CanvasRenderingContext2D, x: number, y: number, r: number, col: Col): void {
+  // greyscale Gemini art recoloured to the band's colour (cached per colour)
+  const ring = art('ring_grey');
+  if (ring) {
+    c.drawImage(tintedBright(ring, col.base), x - r, y - r, r * 2, r * 2);
+    return;
+  }
   const T = r * 0.66, rc = r - T / 2; // thick body, hole radius ≈ 0.34 r
   c.save();
   c.lineCap = 'round';
@@ -1353,8 +1377,14 @@ export function donut(c: CanvasRenderingContext2D, x: number, y: number, r: numb
   c.restore();
 }
 
-/** Holder slot: flat dark-purple disc with a thin gold rim; disabled shows a pink X. */
-export function flatSlot(c: CanvasRenderingContext2D, x: number, y: number, r: number, state: SlotState, pulse = 0): void {
+/**
+ * Holder slot: dark-purple disc with a gold rim; disabled shows a pink X. With bitmap
+ * art (empty / locked) the art replaces the painted disc; shadow and glow stay painted.
+ */
+export function flatSlot(
+  c: CanvasRenderingContext2D, x: number, y: number, r: number, state: SlotState, pulse = 0,
+  art?: { empty: HTMLImageElement; locked: HTMLImageElement },
+): void {
   c.save();
   c.fillStyle = 'rgba(40,20,110,0.28)';
   c.beginPath();
@@ -1365,6 +1395,14 @@ export function flatSlot(c: CanvasRenderingContext2D, x: number, y: number, r: n
     c.beginPath();
     c.arc(x, y, r * 1.45, 0, Math.PI * 2);
     c.fill();
+  }
+  const img = art && (state === 'disabled' ? art.locked : art.empty);
+  if (img && img.complete && img.naturalWidth > 0) {
+    // the art's gold ring fills 235 of its 241 px half-width, matching the painted r × 1.14 rim
+    const h = r * 1.17;
+    c.drawImage(img, x - h, y - h, h * 2, h * 2);
+    c.restore();
+    return;
   }
   c.fillStyle = '#2a1060';
   c.beginPath();

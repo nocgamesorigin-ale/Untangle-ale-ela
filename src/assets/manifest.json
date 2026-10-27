@@ -1,0 +1,50 @@
+[
+  {
+    "file": "src/assets/play_bg.webp",
+    "prompt": "Vertical portrait background for the gameplay screen of a casual mobile puzzle game, set in the same dreamy world as the attached home-screen background. A soft pastel sky with a smooth vertical gradient: baby blue #9CB9FF at the top, periwinkle #A8B6F7 in the middle, soft lavender #BDB4F5 at the bottom. Large out-of-focus glossy pastel spheres and puffy rounded 3D clouds in pale pink-lilac and light blue, placed ONLY along the far left and far right edges and the corners, partly cropped by the frame, softly blurred with shallow depth of field. A very faint lavender haze band around 60% of the height suggests a distant horizon. The whole central area (middle 70% of the width, from 12% to 92% of the height) must stay calm, empty and evenly lit, because the game board, trays and buttons are drawn on top; add only a gentle white glow behind the centre. Nothing in the middle: no objects, platforms, ground, characters, UI or text. Low contrast, airy, clean, smooth gradients, no noise.",
+    "model": "gemini-2.5-flash-image",
+    "ratio": "9:16",
+    "transparent": false,
+    "style": true,
+    "refs": [
+      "src/assets/home-bg.jpg"
+    ],
+    "date": "2026-10-24"
+  },
+  {
+    "file": "src/assets/ring_grey.webp",
+    "prompt": "A single thick rubber-band ring (a short chunky torus, like a donut-shaped hair tie) seen from almost straight above (about 70 degrees down), so it looks nearly circular. The tube is fat: tube thickness about 45% of the ring's outer radius, so the centre hole is about 30% of the total width. Material: smooth glossy soft rubber / candy plastic like the white pegs in the reference. IMPORTANT: render it entirely in NEUTRAL GREYSCALE with no hue at all, because the game recolours it at runtime: mid-grey base #8C8C8C on the top of the tube, darker grey #4A4A4A shading on the lower-right of the tube and on the inner wall of the hole, a crisp near-white specular streak along the upper-left of the tube, a faint light rim on the lower outer edge. The centre hole is filled with dark grey #333333 (shadowed inside), not see-through. No contact shadow, no outline, no text. The ring fills about 90% of the canvas.",
+    "model": "gemini-2.5-flash-image",
+    "ratio": "1:1",
+    "transparent": true,
+    "style": true,
+    "refs": [
+      "tools/refs/ref-board.png"
+    ],
+    "date": "2026-10-24"
+  },
+  {
+    "file": "src/assets/lock_body.webp",
+    "prompt": "The BODY ONLY of a cute chunky toy padlock, seen straight from the front. Do NOT draw the shackle (the U-shaped metal loop); the game draws it separately. The body is a rounded rectangle slightly wider than tall (width to height about 1.2 : 1) with very rounded corners like a soft pillow, a gentle bevel around the front face and a slightly darker bottom edge showing thickness. In the centre, a keyhole: a round hole with a short tapered slot below it, colour dark #2E2A3A. On the top edge, two small dark round sockets where the shackle would enter, at about 25% and 75% of the width. Material: glossy candy plastic, same finish as the buttons in the reference. IMPORTANT: render the body in NEUTRAL GREYSCALE only (mid-grey base #8C8C8C, darker #4F4F4F at the bottom and lower-right, a crisp white specular highlight band across the upper-left of the face) because the game recolours it; only the keyhole is near-black. No shadow, no text, no shackle. The body fills about 85% of the canvas width, centred.",
+    "model": "gemini-2.5-flash-image",
+    "ratio": "1:1",
+    "transparent": true,
+    "style": true,
+    "refs": [
+      "tools/refs/ref-slot.png"
+    ],
+    "date": "2026-10-24"
+  },
+  {
+    "file": "src/assets/key_grey.webp",
+    "prompt": "A cute chunky toy key standing vertically, seen straight from the front: a round bow (head) at the top with a round hole through it, a thick straight shaft going down, and two short square teeth sticking out to the right near the bottom end. Proportions: total height about 2.2 times the bow diameter; shaft width about 30% of the bow diameter; bevelled, softly rounded edges with a slightly 3D thickness. Material: glossy candy plastic, same finish as the buttons in the reference. IMPORTANT: NEUTRAL GREYSCALE only (mid-grey base #8C8C8C, darker #4F4F4F on the right and bottom edges, crisp white specular streak on the upper-left of the bow and down the left of the shaft) because the game recolours it at runtime. The hole in the bow is filled dark grey #333333 (not see-through). No ring or chain, no shadow, no text. Centred, the key fills about 90% of the canvas height.",
+    "model": "gemini-2.5-flash-image",
+    "ratio": "1:1",
+    "transparent": true,
+    "style": true,
+    "refs": [
+      "tools/refs/ref-slot.png"
+    ],
+    "date": "2026-10-24"
+  }
+]
